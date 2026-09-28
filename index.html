@@ -151,6 +151,13 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
 .msg-adm.ok{color:var(--verde);}
 .msg-adm.erro{color:#E74C3C;}
 
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.74);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px;}
+.modal-card{background:var(--card);border:1px solid var(--borda2);max-width:420px;width:100%;padding:34px 32px;position:relative;}
+.modal-card::before{content:'';position:absolute;top:0;left:32px;right:32px;height:1px;background:linear-gradient(90deg,transparent,var(--dourado),transparent);}
+.modal-titulo{font-family:'Cormorant Garamond',serif;font-size:22px;font-style:italic;color:var(--marfim);margin-bottom:22px;}
+.modal-msg{font-size:12px;text-align:center;min-height:18px;line-height:1.5;margin-bottom:8px;}
+.modal-acoes{display:flex;gap:12px;justify-content:flex-end;align-items:center;margin-top:6px;}
+
 ::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-track{background:var(--preto);}::-webkit-scrollbar-thumb{background:var(--borda2);}
 </style>
 </head>
@@ -189,9 +196,28 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
 </div>
 <div class="topo-dir">
 <div class="topo-corretor"><strong id="topo-nome-corretor"></strong></div>
+<button class="btn-ghost" onclick="abrirTrocarSenha()">Trocar senha</button>
 <button class="btn-ghost" onclick="sair()">Sair</button>
 </div>
 </header>
+
+<!-- ═══ MODAL TROCAR SENHA ═══ -->
+<div id="modal-senha" class="modal-overlay" style="display:none;">
+<div class="modal-card">
+<div class="modal-titulo">Trocar minha senha</div>
+<label class="lbl" for="ts-atual">Senha atual</label>
+<input class="inp" type="password" id="ts-atual" autocomplete="current-password">
+<label class="lbl" for="ts-nova">Nova senha</label>
+<input class="inp" type="password" id="ts-nova" autocomplete="new-password">
+<label class="lbl" for="ts-conf">Confirmar nova senha</label>
+<input class="inp" type="password" id="ts-conf" autocomplete="new-password">
+<div id="ts-msg" class="modal-msg"></div>
+<div class="modal-acoes">
+<button class="btn-ghost" onclick="fecharTrocarSenha()">Cancelar</button>
+<button class="btn-ouro" style="width:auto;padding:12px 24px;" id="ts-salvar" onclick="trocarMinhaSenha()">Salvar</button>
+</div>
+</div>
+</div>
 
 <div class="conteudo">
 
@@ -370,6 +396,38 @@ function sair(){
   document.getElementById("app-screen").style.display = "none";
   document.getElementById("s-senha").value = "";
 }
+
+// ═══ TROCAR MINHA SENHA ═══
+function abrirTrocarSenha(){
+  document.getElementById("ts-atual").value = "";
+  document.getElementById("ts-nova").value = "";
+  document.getElementById("ts-conf").value = "";
+  const m = document.getElementById("ts-msg"); m.textContent = ""; m.style.color = "";
+  document.getElementById("modal-senha").style.display = "flex";
+  document.getElementById("ts-atual").focus();
+}
+function fecharTrocarSenha(){ document.getElementById("modal-senha").style.display = "none"; }
+async function trocarMinhaSenha(){
+  const atual = document.getElementById("ts-atual").value;
+  const nova  = document.getElementById("ts-nova").value;
+  const conf  = document.getElementById("ts-conf").value;
+  const msg = document.getElementById("ts-msg");
+  const btn = document.getElementById("ts-salvar");
+  msg.style.color = "#E74C3C";
+  if(!atual || !nova || !conf){ msg.textContent = "Preencha todos os campos."; return; }
+  if(nova.length < 6){ msg.textContent = "A nova senha deve ter ao menos 6 caracteres."; return; }
+  if(nova !== conf){ msg.textContent = "A confirmação não confere com a nova senha."; return; }
+  if(nova === atual){ msg.textContent = "A nova senha deve ser diferente da atual."; return; }
+  btn.disabled = true; btn.textContent = "Salvando...";
+  try{
+    const r = await rpc("ml_trocar_senha", { p_token: sessao.token, p_senha_atual: atual, p_nova_senha: nova });
+    if(!r || !r.ok){ msg.textContent = (r && r.erro) || "Não foi possível trocar a senha."; return; }
+    msg.style.color = "var(--verde)"; msg.textContent = "Senha alterada com sucesso.";
+    setTimeout(fecharTrocarSenha, 1400);
+  }catch(e){ msg.textContent = "Erro de conexão. Tente novamente."; console.error(e); }
+  finally{ btn.disabled = false; btn.textContent = "Salvar"; }
+}
+document.getElementById("ts-conf").addEventListener("keydown", e=>{ if(e.key==="Enter") trocarMinhaSenha(); });
 
 // ═══ NAVEGAÇÃO ═══
 function mostrarView(nome){
