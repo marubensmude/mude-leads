@@ -33,7 +33,10 @@ label.lbl{display:block;font-size:10px;letter-spacing:3px;text-transform:upperca
 .btn-ouro:hover{background:var(--dourado-claro);}
 .btn-ouro:active{transform:scale(.99);}
 .btn-ouro:disabled{opacity:.4;cursor:not-allowed;}
-.login-erro{color:#E74C3C;font-size:12px;text-align:center;margin-top:14px;min-height:18px;}
+.login-erro{color:#E74C3C;font-size:12px;text-align:center;margin-top:14px;min-height:18px;line-height:1.5;}
+.login-links{display:flex;justify-content:space-between;align-items:center;margin:-12px 0 20px;}
+.link-login{background:none;border:none;color:var(--cinza);font-size:11px;letter-spacing:.5px;cursor:pointer;font-family:'DM Sans',sans-serif;padding:2px 0;transition:color .2s;}
+.link-login:hover{color:var(--dourado);}
 
 /* ── APP ── */
 #app-screen{display:none;}
@@ -163,7 +166,11 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
 <label class="lbl" for="s-login">Login</label>
 <input class="inp" type="text" id="s-login" placeholder="nome.sobrenome" autocomplete="username">
 <label class="lbl" for="s-senha">Senha</label>
-<input class="inp" type="password" id="s-senha" placeholder="••••••" autocomplete="current-password">
+<input class="inp" type="password" id="s-senha" placeholder="••••••" autocomplete="current-password" style="margin-bottom:8px;">
+<div class="login-links">
+<button type="button" class="link-login" id="btn-ver-senha" onclick="toggleSenha()">Visualizar a senha</button>
+<button type="button" class="link-login" onclick="esqueciSenha()">Esqueci</button>
+</div>
 <button class="btn-ouro" id="btn-entrar" onclick="fazerLogin()">Acessar</button>
 <div class="login-erro" id="login-erro"></div>
 </div>
@@ -324,6 +331,7 @@ async function fazerLogin(){
   const senha = document.getElementById("s-senha").value;
   const erro = document.getElementById("login-erro");
   const btn = document.getElementById("btn-entrar");
+  erro.style.color = "";
   if(!login || !senha){ erro.textContent = "Preencha login e senha."; return; }
   erro.textContent = ""; btn.disabled = true; btn.textContent = "Acessando...";
   try{
@@ -336,6 +344,18 @@ async function fazerLogin(){
   finally{ btn.disabled = false; btn.textContent = "Acessar"; }
 }
 document.getElementById("s-senha").addEventListener("keydown", e=>{ if(e.key==="Enter") fazerLogin(); });
+
+function toggleSenha(){
+  const inp = document.getElementById("s-senha");
+  const btn = document.getElementById("btn-ver-senha");
+  if(inp.type === "password"){ inp.type = "text"; btn.textContent = "Ocultar a senha"; }
+  else { inp.type = "password"; btn.textContent = "Visualizar a senha"; }
+}
+function esqueciSenha(){
+  const erro = document.getElementById("login-erro");
+  erro.style.color = "var(--marfim2)";
+  erro.textContent = "Para redefinir sua senha, fale com o administrador (Mário Rubens): ele redefine o seu acesso na aba Corretores.";
+}
 
 function entrarNoApp(){
   document.getElementById("login-screen").style.display = "none";
